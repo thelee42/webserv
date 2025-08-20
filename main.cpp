@@ -6,6 +6,9 @@
 #include <unistd.h>       // close()
 #include <cerrno>         // errno
 
+#include    <cstdio>
+#include    <stdlib.h>
+
 #define PORT 8080      // 서버 포트
 #define BUFFER_SIZE 1024
 
