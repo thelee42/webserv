@@ -6,6 +6,9 @@
 #include <unistd.h>       // close()
 #include <cerrno>         // errno
 
+#include <fstream>       // std::ifstream
+#include <sstream>       // std::ostringstream
+
 #define PORT 8080      // 서버 포트
 #define BUFFER_SIZE 1024
 
@@ -29,17 +32,7 @@ int main() {
     struct sockaddr_in address;
     int addrlen = sizeof(address);
     char buffer[BUFFER_SIZE] = {0};
-    //const char *response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHello from Thea LEE server!\n";
-    const char* response =
-                "HTTP/1.1 200 OK\r\n"
-                "Content-Type: text/html\r\n"
-                "\r\n"
-                "<html>"
-                "<body>"
-                "<h1>Hello from Thea LEE server!</h1>"
-                "<p>42 Webserv implementation</p>"
-                "</body>"
-                "</html>";
+
     // 1. 소켓 생성
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         std::cerr << "socket failed: " << strerror(errno) << std::endl;
@@ -85,7 +78,7 @@ int main() {
         //setNonBlocking(new_socket);
 
         // 6. 클라이언트 메시지 읽기
-        if (read(new_socket, buffer, BUFFER_SIZE) <= 0) {
+        if (recv(new_socket, buffer, BUFFER_SIZE, 0) <= 0) {
             std::cout << "Client disconnected.\n";
             close(new_socket);
             continue;
@@ -102,7 +95,52 @@ int main() {
         std::cout << "Received request:\n" << buffer << "\n";
 
         // 7. 응답 전송
-        send(new_socket, response, strlen(response), 0);
+
+        if (strncmp(buffer, "GET /test.jpg", 13) == 0) {
+            std::ifstream file("test.jpg", std::ios::binary | std::ios::ate);
+            if (file.is_open()) {
+                std::streamsize size = file.tellg();
+                file.seekg(0, std::ios::beg);
+                std::vector<char> fileBuffer(size);
+                file.read(fileBuffer.data(), size);
+
+                std::ostringstream oss;
+                oss << "HTTP/1.1 200 OK\r\n"
+                    << "Content-Type: image/jpg\r\n"
+                    << "Content-Length: " << size << "\r\n"
+                    << "\r\n";
+                std::string header = oss.str();
+
+                send(new_socket, header.c_str(), header.size(), 0);
+                send(new_socket, fileBuffer.data(), fileBuffer.size(), 0);
+            }
+        }
+
+        std::string filename;
+
+        if (strncmp(buffer, "GET /photo", 10) == 0)
+            filename = "photo.html";
+        else if (strncmp(buffer, "GET /about", 9) == 0)
+            filename = "about.html";
+        else
+            filename = "home.html";
+
+        std::ifstream file(filename, std::ios::binary);
+
+        if(file) {
+            std::ostringstream ss;
+            ss << file.rdbuf();
+            std::string body = ss.str();
+
+            std::string header = 
+                "HTTP/1.1 200 OK\r\n"
+                "Content-Type: text/html\r\n"
+                "Content-Length: " + std::to_string(body.size()) + "\r\n"
+                "\r\n";
+            send(new_socket, header.c_str(), header.size(), 0);
+            send(new_socket, body.c_str(), body.size(), 0);
+        }
+
         std::cout << "Response sent.\n";
 
         // 8. 소켓 종료
