@@ -8,6 +8,7 @@
 
 #include <fstream>       // std::ifstream
 #include <sstream>       // std::ostringstream
+#include <map>           // std::map
 
 #define PORT 8080      // 서버 포트
 #define BUFFER_SIZE 1024
@@ -96,6 +97,27 @@ int main() {
 
         // 7. 응답 전송
 
+        //simple parsing
+        std::string request(buffer, strlen(buffer));
+
+        std::istringstream iss(request);
+        std::string line;
+
+        // 1. 첫 줄(요청 라인) 파싱
+        std::getline(iss, line);
+        if (!line.empty() && line.back() == '\r')
+            line.pop_back(); // CR 제거
+
+        std::istringstream request_line(line);
+        std::string method, path, version;
+        request_line >> method >> path >> version;
+
+        std::string filename;
+
+        if (method != "GET") {
+            filename = "405.html";
+        }
+
         if (strncmp(buffer, "GET /test.jpg", 13) == 0) {
             std::ifstream file("test.jpg", std::ios::binary | std::ios::ate);
             if (file.is_open()) {
@@ -116,18 +138,17 @@ int main() {
             }
         }
 
-        std::string filename;
-
         if (strncmp(buffer, "GET /photo", 10) == 0)
             filename = "photo.html";
         else if (strncmp(buffer, "GET /about", 9) == 0)
             filename = "about.html";
-        else
+        else if (strncmp(buffer, "GET / ", 6) == 0)
             filename = "home.html";
-
+        else
+            filename = "404.html";
         std::ifstream file(filename, std::ios::binary);
 
-        if(file) {
+        if(file.is_open()) {
             std::ostringstream ss;
             ss << file.rdbuf();
             std::string body = ss.str();
