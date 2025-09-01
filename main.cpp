@@ -28,11 +28,55 @@ void setNonBlocking(int sockfd)
     }
 }
 
+std::string get_extension(const std::string &filename) {
+    size_t pos = filename.find_last_of('.');
+    if (pos == std::string::npos) // no '.'
+        return "";
+    return filename.substr(pos + 1); // from '.' to end
+}
+
+
+std::map<std::string, std::string> initMimeTypes() {
+    std::map<std::string, std::string> mimeTypes;
+
+    // text
+    mimeTypes["html"] = "text/html";
+    mimeTypes["htm"]  = "text/html";
+    mimeTypes["txt"]  = "text/plain";
+    mimeTypes["css"]  = "text/css";
+    mimeTypes["js"]   = "application/javascript";
+    mimeTypes["json"] = "application/json";
+
+    // image
+    mimeTypes["jpg"]  = "image/jpeg";
+    mimeTypes["jpeg"] = "image/jpeg";
+    mimeTypes["png"]  = "image/png";
+    mimeTypes["gif"]  = "image/gif";
+    mimeTypes["bmp"]  = "image/bmp";
+    mimeTypes["ico"]  = "image/x-icon";
+    mimeTypes["svg"]  = "image/svg+xml";
+    mimeTypes["webp"] = "image/webp";
+
+    // video
+    mimeTypes["mp4"]  = "video/mp4";
+    mimeTypes["mp3"]  = "audio/mpeg";
+    mimeTypes["wav"]  = "audio/wav";
+
+    // CGI 
+    // mimeTypes["py"]   = "text/html";
+    // mimeTypes["pl"]   = "text/html";  
+    // mimeTypes["cgi"]  = "text/html";
+
+    return mimeTypes;
+}
+
+
 int main() {
     int server_fd, new_socket;
     struct sockaddr_in address;
     int addrlen = sizeof(address);
     char buffer[BUFFER_SIZE] = {0};
+    std::map<std::string, std::string> mimeTypes = initMimeTypes();
 
     // 1. 소켓 생성
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
@@ -114,48 +158,33 @@ int main() {
 
         std::string filename;
 
-        if (method != "GET") {
+        std::cout << "-----------------\n" << "Method: " << method << ", Path: " << path << ", Version: " << version << "\n-------------\n";
+
+        if (method != "GET")
             filename = "405.html";
-        }
-
-        if (strncmp(buffer, "GET /test.jpg", 13) == 0) {
-            std::ifstream file("test.jpg", std::ios::binary | std::ios::ate);
-            if (file.is_open()) {
-                std::streamsize size = file.tellg();
-                file.seekg(0, std::ios::beg);
-                std::vector<char> fileBuffer(size);
-                file.read(fileBuffer.data(), size);
-
-                std::ostringstream oss;
-                oss << "HTTP/1.1 200 OK\r\n"
-                    << "Content-Type: image/jpg\r\n"
-                    << "Content-Length: " << size << "\r\n"
-                    << "\r\n";
-                std::string header = oss.str();
-
-                send(new_socket, header.c_str(), header.size(), 0);
-                send(new_socket, fileBuffer.data(), fileBuffer.size(), 0);
-            }
-        }
-
-        if (strncmp(buffer, "GET /photo", 10) == 0)
-            filename = "photo.html";
-        else if (strncmp(buffer, "GET /about", 9) == 0)
-            filename = "about.html";
-        else if (strncmp(buffer, "GET / ", 6) == 0)
-            filename = "home.html";
+        else if (path == "/")
+            filename = "./home.html";
         else
-            filename = "404.html";
-        std::ifstream file(filename, std::ios::binary);
+            filename = "." + path;
 
+        std::ifstream file(filename, std::ios::binary);
+        if (!file.is_open()) {
+            filename = "./404.html";
+            file.open(filename.c_str(), std::ios::binary);
+        }
         if(file.is_open()) {
+            std::string ext = get_extension(filename);
+
             std::ostringstream ss;
             ss << file.rdbuf();
             std::string body = ss.str();
-
+            std::string mime = "text/html"; // default
+            if (mimeTypes.find(ext) != mimeTypes.end()) {
+                mime = mimeTypes[ext];
+            }
             std::string header = 
                 "HTTP/1.1 200 OK\r\n"
-                "Content-Type: text/html\r\n"
+                "Content-Type: " + mime + "\r\n"
                 "Content-Length: " + std::to_string(body.size()) + "\r\n"
                 "\r\n";
             send(new_socket, header.c_str(), header.size(), 0);
