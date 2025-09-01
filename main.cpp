@@ -5,15 +5,18 @@
 #include <netinet/in.h>   // sockaddr_in 구조체, htons(), INADDR_ANY
 #include <unistd.h>       // close()
 #include <cerrno>         // errno
+#include <fcntl.h>       // fcntl()
 
 #include <fstream>       // std::ifstream
 #include <sstream>       // std::ostringstream
 #include <map>           // std::map
 
+#include "httpRequest.hpp"
+
 #define PORT 8080      // 서버 포트
 #define BUFFER_SIZE 1024
 
-#include <fcntl.h>       // fcntl()
+
 
 void setNonBlocking(int sockfd) 
 {
@@ -28,15 +31,9 @@ void setNonBlocking(int sockfd)
     }
 }
 
-std::string get_extension(const std::string &filename) {
-    size_t pos = filename.find_last_of('.');
-    if (pos == std::string::npos) // no '.'
-        return "";
-    return filename.substr(pos + 1); // from '.' to end
-}
 
-
-std::map<std::string, std::string> initMimeTypes() {
+std::map<std::string, std::string> initMimeTypes() // webserver class 
+{
     std::map<std::string, std::string> mimeTypes;
 
     // text
@@ -69,6 +66,7 @@ std::map<std::string, std::string> initMimeTypes() {
 
     return mimeTypes;
 }
+
 
 
 int main() {
@@ -140,47 +138,25 @@ int main() {
         std::cout << "Received request:\n" << buffer << "\n";
 
         // 7. 응답 전송
+        httpRequest req;
+        req.parseRequestLine(buffer);
 
-        //simple parsing
-        std::string request(buffer, strlen(buffer));
+        std::cout << "------------\nmethod: " << req.getMethod() << "\npath: " << req.getPath() << "\nversion: " << req.getVersion() << "\nextension: " << req.getExtension() << "\nfilename: " << req.getFilename() << "-----------\n";
 
-        std::istringstream iss(request);
-        std::string line;
-
-        // 1. 첫 줄(요청 라인) 파싱
-        std::getline(iss, line);
-        if (!line.empty() && line.back() == '\r')
-            line.pop_back(); // CR 제거
-
-        std::istringstream request_line(line);
-        std::string method, path, version;
-        request_line >> method >> path >> version;
-
-        std::string filename;
-
-        std::cout << "-----------------\n" << "Method: " << method << ", Path: " << path << ", Version: " << version << "\n-------------\n";
-
-        if (method != "GET")
-            filename = "405.html";
-        else if (path == "/")
-            filename = "./home.html";
-        else
-            filename = "." + path;
-
-        std::ifstream file(filename, std::ios::binary);
+        std::ifstream file(req.getFilename(), std::ios::binary);
         if (!file.is_open()) {
-            filename = "./404.html";
-            file.open(filename.c_str(), std::ios::binary);
+            req.setFilename("./404.html");
+            file.open(req.getFilename().c_str(), std::ios::binary);
         }
-        if(file.is_open()) {
-            std::string ext = get_extension(filename);
+        std::cout << "------------\nServing file: " << req.getFilename() << "-----------\n";
 
+        if(file.is_open()) {
             std::ostringstream ss;
             ss << file.rdbuf();
             std::string body = ss.str();
             std::string mime = "text/html"; // default
-            if (mimeTypes.find(ext) != mimeTypes.end()) {
-                mime = mimeTypes[ext];
+            if (mimeTypes.find(req.getExtension()) != mimeTypes.end()) {
+                mime = mimeTypes[req.getExtension()];
             }
             std::string header = 
                 "HTTP/1.1 200 OK\r\n"

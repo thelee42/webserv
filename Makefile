@@ -2,7 +2,7 @@ NAME = webserv
 CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
-SRC = main.cpp
+SRC = main.cpp httpRequest.cpp
 OBJDIR = .obj
 OBJ = $(addprefix $(OBJDIR)/, $(SRC:.cpp=.o))
 
