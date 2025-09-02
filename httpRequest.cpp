@@ -18,7 +18,7 @@ std::string httpRequest::parseExtension(const std::string &filename) {
 
 
 void    httpRequest::parseRequestLine(const char *buffer) {
-        std::string request(buffer, strlen(buffer)); // or bytesRead = return of recv
+        std::string request(buffer, std::strlen(buffer)); // or bytesRead = return of recv
         size_t pos = request.find("\r\n");       // getline
         std::string requestLine = request.substr(0, pos);
 

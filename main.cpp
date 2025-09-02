@@ -10,6 +10,7 @@
 #include <fstream>       // std::ifstream
 #include <sstream>       // std::ostringstream
 #include <map>           // std::map
+#include <string>        // std::string
 
 #include "httpRequest.hpp"
 
@@ -143,7 +144,20 @@ int main() {
 
         std::cout << "------------\nmethod: " << req.getMethod() << "\npath: " << req.getPath() << "\nversion: " << req.getVersion() << "\nextension: " << req.getExtension() << "\nfilename: " << req.getFilename() << "-----------\n";
 
-        std::ifstream file(req.getFilename(), std::ios::binary);
+        if (req.getPath() == "/redirect") {
+            std::string redirect_url = "https://www.youtube.com/@42born2code";
+            std::string header =
+                "HTTP/1.1 302 Found\r\n"
+                "Location: " + redirect_url + "\r\n"
+                "Content-Length: 0\r\n"
+            "\r\n";
+        send(new_socket, header.c_str(), header.size(), 0);
+        std::cout << "Response sent.\n";
+        close(new_socket);
+        continue;
+        }
+
+        std::ifstream file(req.getFilename().c_str(), std::ios::binary);
         if (!file.is_open()) {
             req.setFilename("./404.html");
             file.open(req.getFilename().c_str(), std::ios::binary);
@@ -154,14 +168,25 @@ int main() {
             std::ostringstream ss;
             ss << file.rdbuf();
             std::string body = ss.str();
+            //body size
+            std::ostringstream length_ss;
+            length_ss << body.size();
+            //
             std::string mime = "text/html"; // default
             if (mimeTypes.find(req.getExtension()) != mimeTypes.end()) {
                 mime = mimeTypes[req.getExtension()];
             }
+            std::string status_line;
+            if (req.getFilename() == "./404.html")
+                status_line = "HTTP/1.1 404 Not Found\r\n";
+            else if (req.getFilename() == "./405.html")
+                status_line = "HTTP/1.1 405 Method Not Allowed\r\n";
+            else
+                status_line = "HTTP/1.1 200 OK\r\n";
             std::string header = 
-                "HTTP/1.1 200 OK\r\n"
+                status_line +
                 "Content-Type: " + mime + "\r\n"
-                "Content-Length: " + std::to_string(body.size()) + "\r\n"
+                "Content-Length: " + length_ss.str() + "\r\n"
                 "\r\n";
             send(new_socket, header.c_str(), header.size(), 0);
             send(new_socket, body.c_str(), body.size(), 0);
