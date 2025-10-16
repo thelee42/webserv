@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Upload Page</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+            background-color: #FFFFFF;
+            color: #333;
+        }
+        h1 {
+            margin-top: 150px;
+            color: #007acc;
+            font-size: 60px;
+            margin-bottom: 50px;
+        }
+        .upload-box {
+            margin: 30px auto;
+            padding: 20px;
+            border: 2px dashed #007acc;
+            border-radius: 10px;
+            width: 400px;
+            background-color: #f9f9f9;
+        }
+        input[type="file"] {
+            margin: 20px 0;
+        }
+        input[type="submit"] {
+            background-color: #007acc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #005f99;
+        }
+        a {
+            text-decoration: none;
+            color: #007acc;
+            font-weight: bold;
+        }
+        a:hover {
+            color: #005f99;
+        }
+    </style>
+</head>
+<body>
+    <h1>Upload Your File</h1>
+    <div class="upload-box">
+        <form action="/upload" method="POST" enctype="multipart/form-data">
+            <p><strong>Select a file to upload:</strong></p>
+            <input type="file" name="file" required><br>
+            <input type="submit" value="Upload">
+        </form>
+    </div>
+    <p><a href="/">Go back to Home</a></p>
+</body>
+</html>
