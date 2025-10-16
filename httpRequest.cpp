@@ -40,8 +40,8 @@ void    httpRequest::parseRequest(const std::string &buffer) {
     std::istringstream headers(headerBlock);
     std::string headerLine;
     while(std::getline(headers, headerLine)) {
-        if(!headerLine.empty() && headerLine.back() == '\r')
-            headerLine.pop_back(); // remove trailing \r
+        if (!headerLine.empty() && headerLine[headerLine.size() - 1] == '\r') 
+            headerLine.erase(headerLine.size() - 1); // remove trailing \r
         // Process headerLine
         size_t colonPos = headerLine.find(':');
         if (colonPos != std::string::npos) {
@@ -165,13 +165,14 @@ void httpRequest::parseMultipartBody(const LocationConfig* loc) {
     if (filenamePos != std::string::npos) {
         filenamePos += 10; // skip "filename=\""
         size_t filenameEndPos = _body.find("\"", filenamePos);
-        if (filenameEndPos != std::string::npos)
+        if (filenameEndPos != std::string::npos) {
             _uploadFilename = _body.substr(filenamePos, filenameEndPos - filenamePos);
             if (!loc->isExtensionAllowed(_uploadFilename)) {
                 std::cerr << "File extension not allowed: " << _uploadFilename << std::endl;
                 _uploadFilename.clear(); // 허용되지 않은 확장자면 파일명 초기화
                 return ;
             }
+        }
     }
     // 4. 파일 content 시작 위치
     size_t contentPos = _body.find("\r\n\r\n", filenamePos);

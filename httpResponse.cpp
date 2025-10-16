@@ -18,10 +18,10 @@ void httpResponse::setFilename(const std::string& path, const std::string& root)
 {
     std::cout << "SETTING FILE root : " << root << ", path: " << path << "\n";
     std::string filepath = root;
-    if (filepath.back() != '/')
+    if (!path.empty() && path[0] != '/')
         filepath += "/";
-    if (path == "/")
-        filepath += "index.html";
+    if (!path.compare("/"))
+        filepath += "/index.html";
     // std::string cleanPath = path;
     // if (!cleanPath.empty() && cleanPath[0] == '/') {
     //     cleanPath = cleanPath.substr(1);
@@ -40,6 +40,7 @@ void httpResponse::setFilename(const std::string& path, const std::string& root)
     // }
 
     this->_filename = filepath;
+    std::cerr << _filename << std::endl;
 }
 
 

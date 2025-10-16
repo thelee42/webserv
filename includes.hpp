@@ -11,6 +11,7 @@
 #include <sys/stat.h>   // mkdir
 #include <sys/socket.h>   // socket(), bind(), listen(), accept(), send(), read()
 #include <sys/types.h>    // socket 관련 데이터 타입
+#include <sys/wait.h>
 #include <unistd.h>       // close()
 
 #include <algorithm>

@@ -2,7 +2,7 @@ NAME = webserv
 CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
-SRC = main.cpp httpRequest.cpp Server.cpp configParser.cpp upload.cpp utils.cpp httpResponse.cpp
+SRC = main.cpp httpRequest.cpp Server.cpp configParser.cpp upload.cpp utils_http.cpp httpResponse.cpp utils.cpp
 OBJDIR = .obj
 OBJ = $(addprefix $(OBJDIR)/, $(SRC:.cpp=.o))
 UPLOADROOT = ./www

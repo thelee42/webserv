@@ -31,7 +31,9 @@ std::string getUniqueFileName(const std::string& dir, const std::string& filenam
     int counter = 2;
     std::string newName;
     do {
-        newName = name + "(" + std::to_string(counter) + ")" + ext;
+        std::stringstream ss;
+        ss << counter;
+        newName = name + "(" + ss.str() + ")" + ext;
         fullPath = dir + "/" + newName;
         ++counter;
     } while (access(fullPath.c_str(), F_OK) == 0);

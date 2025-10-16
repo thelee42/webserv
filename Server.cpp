@@ -84,7 +84,7 @@ bool Server::matches(const std::string& host, const std::string& port) const {
     // 포트 문자열 -> int 변환
     int port_num = 0;
     try {
-        port_num = std::stoi(port);
+        port_num = atoi(port.c_str());
     } catch (...) {
         // 변환 실패시 기본값 0 or _port 비교 실패 처리
         return false;

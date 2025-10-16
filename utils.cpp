@@ -1,46 +1,69 @@
-#include    "includes.hpp"
+#include "includes.hpp"
 
-
-
-void setNonBlocking(int sockfd) 
-{
-    int fl = fcntl(sockfd, F_GETFL, 0);
-    if (fl < 0) {
-        std::cerr << "fcntl failed: " << strerror(errno) << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    if (fcntl(sockfd, F_SETFL, fl | O_NONBLOCK) < 0) {
-        std::cerr << "fcntl failed: " << strerror(errno) << std::endl;
-        exit(EXIT_FAILURE);
-    }
+std::string ft_tostring(int value) {
+    std::ostringstream oss;
+    oss << value;
+    return oss.str();
 }
 
-std::map<std::string, std::string> initMimeTypes() // webserver class 
-{
-    std::map<std::string, std::string> mimeTypes;
+int ft_back(std::string tmp, char occ) {
+    if (tmp.empty()) {
+		std::cout << "empty" << std::endl;
+        return 0;
+	}
+    std::size_t length = tmp.length() - 1;
+    if (tmp[length] == occ) {
+        return 1;
+	}
+	return 0;
+}
 
-    // text
-    mimeTypes[".html"] = "text/html";
-    mimeTypes[".htm"]  = "text/html";
-    mimeTypes[".txt"]  = "text/plain";
-    mimeTypes[".css"]  = "text/css";
-    mimeTypes[".js"]   = "application/javascript";
-    mimeTypes[".json"] = "application/json";
+void ft_popback(std::string &tmp) {
+    if (tmp.empty()) {
+		std::cout << "empty" << std::endl;
+        return ;
+	}
+    std::size_t length = tmp.length() - 1;
+	tmp.erase(length);
+}
 
-    // image
-    mimeTypes[".jpg"]  = "image/jpeg";
-    mimeTypes[".jpeg"] = "image/jpeg";
-    mimeTypes[".png"]  = "image/png";
-    mimeTypes[".gif"]  = "image/gif";
-    mimeTypes[".bmp"]  = "image/bmp";
-    mimeTypes[".ico"]  = "image/x-icon";
-    mimeTypes[".svg"]  = "image/svg+xml";
-    mimeTypes[".webp"] = "image/webp";
+int empty_line(std::string line) {
+    for (std::size_t i = 0; i < line.size(); i++) {
+        if (!std::isspace(line[i]) && line[i] != '\n')
+            return (0);
+    }
+    return (1);
+}
 
-    // CGI 
-    // mimeTypes["py"]   = "text/html";
-    // mimeTypes["pl"]   = "text/html";  
-    // mimeTypes["cgi"]  = "text/html";
+std::size_t skipSpaces(const std::string& line, std::size_t pos) {
+    std::size_t newPos = line.find_first_not_of(" \t\r\f\v=", pos);
+    if (newPos != std::string::npos && line[newPos] != '\n') {
+        return (newPos);
+    }
+    return (pos);
+}
 
-    return mimeTypes;
+int toInt(const std::string &s) {
+    int valueToInt;
+    std::stringstream string(s);
+
+    string >> valueToInt;
+    if (string.fail() || !string.eof())
+        throw std::runtime_error("Error: bad value in config");
+    return (valueToInt);
+}
+
+bool isValidPath(const std::string& path) {
+    if (path.empty())
+        return false;
+    if (path[0] != '/' && path.substr(0, 2) != "./")
+        return false;
+    std::string invalidChars = "<>|\"*?";
+    for (std::size_t i = 0; i < invalidChars.length(); i++) {
+        if (path.find(invalidChars[i]) != std::string::npos)
+            return false;
+    }
+    if (path.find("../") != std::string::npos)
+        return false;
+    return true;
 }
